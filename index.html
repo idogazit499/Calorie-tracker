@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calorie Deficit Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="header-title">
+      <span class="app-icon">🌸</span>
+      <h1>Shira's Tracker</h1>
+    </div>
+    <nav>
+      <button class="tab-btn active" data-tab="today">
+        <span class="tab-icon">☀️</span>
+        <span class="tab-label">Today</span>
+      </button>
+      <button class="tab-btn" data-tab="weekly">
+        <span class="tab-icon">📊</span>
+        <span class="tab-label">Weekly</span>
+      </button>
+      <button class="tab-btn" data-tab="monthly">
+        <span class="tab-icon">📅</span>
+        <span class="tab-label">Monthly</span>
+      </button>
+      <button class="tab-btn" data-tab="profile">
+        <span class="tab-icon">💕</span>
+        <span class="tab-label">Profile</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- TODAY TAB -->
+    <section id="tab-today" class="tab-section active">
+
+      <div class="greeting-banner">
+        <p id="greeting-text" class="greeting-text"></p>
+        <p id="greeting-sub" class="greeting-sub"></p>
+      </div>
+
+      <div class="card">
+        <h2>Steps Today</h2>
+        <div class="input-row">
+          <input type="number" id="steps-input" min="0" placeholder="e.g. 8000">
+          <button id="save-steps-btn">Save</button>
+        </div>
+        <p id="steps-error" class="error-msg hidden"></p>
+      </div>
+
+      <div class="card">
+        <h2>Today's Weight</h2>
+        <div class="input-row">
+          <input type="number" id="weight-input" min="20" max="300" step="0.1" placeholder="e.g. 68.5">
+          <button id="save-weight-btn">Save</button>
+        </div>
+        <p id="weight-saved-note" class="status-msg hidden">Weight saved!</p>
+      </div>
+
+      <div class="card">
+        <h2>What did you eat?</h2>
+        <div class="nlp-input-wrap">
+          <textarea id="food-nlp-input" placeholder="e.g. 2 scrambled eggs, a banana, and a coffee with oat milk" rows="3"></textarea>
+          <div class="send-row">
+            <p id="nlp-status" class="status-msg hidden"></p>
+            <button id="log-food-btn">Log Food</button>
+          </div>
+          <p class="nlp-hint">Tip: Press Ctrl+Enter to submit</p>
+        </div>
+        <div id="parsed-results-wrap" class="hidden">
+          <ul id="parsed-results"></ul>
+          <div class="meal-selector" id="meal-selector">
+            <button type="button" class="meal-btn" data-meal="breakfast">🌅 Breakfast</button>
+            <button type="button" class="meal-btn" data-meal="lunch">☀️ Lunch</button>
+            <button type="button" class="meal-btn" data-meal="dinner">🌙 Dinner</button>
+            <button type="button" class="meal-btn" data-meal="snack">🍎 Snack</button>
+          </div>
+          <div class="confirm-row">
+            <button id="confirm-foods-btn">Add All to Log</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Today's Food Log</h2>
+        <p id="food-log-empty" class="empty-msg">No food logged yet.</p>
+        <div id="food-log"></div>
+      </div>
+
+      <div class="card summary-card">
+        <h2>Today's Summary</h2>
+        <div class="stat-row">
+          <div class="stat-box">
+            <span class="stat-value" id="stat-burned">—</span>
+            <span class="stat-label">Burned (kcal)</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="stat-consumed">—</span>
+            <span class="stat-label">Consumed (kcal)</span>
+          </div>
+          <div class="stat-box" id="deficit-box">
+            <span class="stat-value" id="stat-deficit">—</span>
+            <span class="stat-label">Deficit (kcal)</span>
+          </div>
+        </div>
+        <p id="deficit-note" class="status-msg"></p>
+      </div>
+
+      <div class="card" id="macro-card">
+        <h2>Today's Macros</h2>
+        <div class="macro-stats">
+          <div class="macro-stat-box protein-box">
+            <span class="macro-value" id="macro-protein">—</span>
+            <span class="macro-label">Protein (g)</span>
+          </div>
+          <div class="macro-stat-box carbs-box">
+            <span class="macro-value" id="macro-carbs">—</span>
+            <span class="macro-label">Carbs (g)</span>
+          </div>
+          <div class="macro-stat-box fat-box">
+            <span class="macro-value" id="macro-fat">—</span>
+            <span class="macro-label">Fat (g)</span>
+          </div>
+        </div>
+        <div class="macro-chart-wrap">
+          <canvas id="macro-chart"></canvas>
+        </div>
+        <p id="macro-empty" class="empty-msg hidden">Log food to see your macro breakdown.</p>
+      </div>
+
+      <div class="card progress-card">
+        <h2>Today's Progress</h2>
+
+        <div class="progress-group">
+          <div class="progress-header">
+            <span class="progress-label">Steps</span>
+            <span class="progress-value" id="progress-steps-label">0 / 10,000</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill steps-fill" id="progress-steps-bar"></div>
+          </div>
+          <p class="progress-note" id="progress-steps-note"></p>
+        </div>
+
+        <div class="progress-group">
+          <div class="progress-header">
+            <span class="progress-label">Deficit Goal</span>
+            <span class="progress-value" id="progress-deficit-label">0 / 500 kcal</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill deficit-fill" id="progress-deficit-bar"></div>
+          </div>
+          <p class="progress-note" id="progress-deficit-note"></p>
+        </div>
+
+        <div class="streak-display">
+          <div class="streak-icon">★</div>
+          <div class="streak-text">
+            <div>
+              <span class="streak-number" id="streak-count">0</span>
+              <span class="streak-label"> day streak</span>
+            </div>
+            <p class="streak-desc">consecutive days hitting your deficit goal</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- WEEKLY TAB -->
+    <section id="tab-weekly" class="tab-section">
+      <div class="card">
+        <h2>Last 7 Days</h2>
+        <p id="weekly-total" class="period-total"></p>
+        <div class="chart-container">
+          <canvas id="weekly-chart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Weight Trend — Last 7 Days</h2>
+        <p id="weekly-weight-note" class="period-total"></p>
+        <div class="chart-container">
+          <canvas id="weekly-weight-chart"></canvas>
+        </div>
+      </div>
+      <div class="card" id="best-day-card">
+        <h2>Personal Best</h2>
+        <p id="best-day-text" class="best-day-body"></p>
+      </div>
+    </section>
+
+    <!-- MONTHLY TAB -->
+    <section id="tab-monthly" class="tab-section">
+      <div class="card">
+        <h2>Last 30 Days</h2>
+        <p id="monthly-total" class="period-total"></p>
+        <div class="chart-container">
+          <canvas id="monthly-chart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Weight Trend — Last 30 Days</h2>
+        <p id="monthly-weight-note" class="period-total"></p>
+        <div class="chart-container">
+          <canvas id="monthly-weight-chart"></canvas>
+        </div>
+      </div>
+      <div class="card" id="projection-card">
+        <h2>Weight Loss Projection</h2>
+        <p id="projection-text" class="projection-body"></p>
+      </div>
+    </section>
+
+    <!-- PROFILE TAB -->
+    <section id="tab-profile" class="tab-section">
+      <div class="card">
+        <h2>Your Profile</h2>
+        <p class="status-msg">Used to calculate your Basal Metabolic Rate (BMR).</p>
+        <form id="profile-form">
+          <div class="float-group">
+            <input type="text" id="profile-name" placeholder=" ">
+            <label for="profile-name">Name</label>
+          </div>
+          <div class="float-group">
+            <input type="number" id="profile-weight" min="1" step="0.1" placeholder=" ">
+            <label for="profile-weight">Weight (kg)</label>
+          </div>
+          <div class="float-group">
+            <input type="number" id="profile-height" min="1" step="0.1" placeholder=" ">
+            <label for="profile-height">Height (cm)</label>
+          </div>
+          <div class="float-group">
+            <input type="number" id="profile-age" min="1" max="120" placeholder=" ">
+            <label for="profile-age">Age</label>
+          </div>
+          <div class="float-group">
+            <select id="profile-gender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+            <label for="profile-gender">Gender</label>
+          </div>
+
+          <fieldset class="goals-section">
+            <legend>Daily Goals</legend>
+            <div class="float-group">
+              <input type="number" id="profile-step-goal" min="1000" step="500" placeholder=" ">
+              <label for="profile-step-goal">Step Goal (steps/day)</label>
+            </div>
+            <div class="float-group">
+              <input type="number" id="profile-deficit-goal" min="100" step="50" placeholder=" ">
+              <label for="profile-deficit-goal">Calorie Deficit Goal (kcal/day)</label>
+            </div>
+            <div class="float-group">
+              <input type="number" id="profile-weight-goal" min="30" max="200" step="0.1" placeholder=" ">
+              <label for="profile-weight-goal">Goal Weight (kg)</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="goals-section">
+            <legend>CalorieNinjas API Key</legend>
+            <p class="nutritionix-hint">Get a free key at <a href="https://calorieninjas.com/api" target="_blank" rel="noopener">calorieninjas.com/api</a> (50,000 calls/month free)</p>
+            <div class="float-group">
+              <input type="password" id="profile-calorie-ninjas-key" placeholder=" " autocomplete="off">
+              <label for="profile-calorie-ninjas-key">API Key</label>
+            </div>
+          </fieldset>
+
+          <button type="submit">Save Profile</button>
+        </form>
+        <p id="profile-saved-msg" class="success-msg hidden">Profile saved!</p>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

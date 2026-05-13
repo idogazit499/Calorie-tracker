@@ -80,6 +80,10 @@
           </div>
           <p class="nlp-hint">Tip: Press Ctrl+Enter to submit</p>
         </div>
+        <div id="recent-foods-wrap" class="hidden">
+          <p class="recent-foods-label">Recent</p>
+          <div id="recent-foods-list"></div>
+        </div>
         <div id="parsed-results-wrap" class="hidden">
           <ul id="parsed-results"></ul>
           <div class="meal-selector" id="meal-selector">
@@ -283,6 +287,14 @@
           <button type="submit">Save Profile</button>
         </form>
         <p id="profile-saved-msg" class="success-msg hidden">Profile saved!</p>
+        <div class="data-io-row">
+          <button type="button" id="export-btn">Export Data</button>
+          <label class="import-label">
+            Import Data
+            <input type="file" id="import-input" accept=".json" hidden>
+          </label>
+        </div>
+        <p id="import-status" class="status-msg hidden"></p>
       </div>
     </section>
 

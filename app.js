@@ -476,6 +476,7 @@
     renderWeightLog();
     renderFoodLog();
     renderTodaySummary();
+    renderRecentFoods();
 
     // Auto-apply steps from iOS Shortcut URL parameter (?steps=8432)
     const urlParams = new URLSearchParams(location.search);
@@ -754,10 +755,54 @@
     document.getElementById('food-nlp-input').value = '';
     renderFoodLog();
     renderTodaySummary();
+    renderRecentFoods();
   }
 
   function capitalize(str) {
     return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+  }
+
+  // ─── Recent Foods ─────────────────────────────────────────────────────────────
+
+  function getRecentFoods(data, limit = 6) {
+    const seen   = new Set();
+    const result = [];
+    const keys   = Object.keys(data.entries).sort().reverse();
+    for (const key of keys) {
+      const foods = (data.entries[key].foods || []).slice().reverse();
+      for (const f of foods) {
+        if (!seen.has(f.name)) {
+          seen.add(f.name);
+          result.push(f);
+          if (result.length >= limit) return result;
+        }
+      }
+    }
+    return result;
+  }
+
+  function renderRecentFoods() {
+    const data    = loadData();
+    const recents = getRecentFoods(data);
+    const wrap    = document.getElementById('recent-foods-wrap');
+    const list    = document.getElementById('recent-foods-list');
+    list.innerHTML = '';
+    if (recents.length === 0) { wrap.classList.add('hidden'); return; }
+
+    recents.forEach(food => {
+      const pill       = document.createElement('button');
+      pill.type        = 'button';
+      pill.className   = 'recent-food-pill';
+      pill.textContent = `${food.name} · ${food.calories} kcal`;
+      pill.addEventListener('click', () => {
+        pendingFoods = [{ name: food.name, calories: food.calories, protein: food.protein, carbs: food.carbs, fat: food.fat, serving: '' }];
+        pendingMeal  = getMealDefault();
+        pendingQuery = food.name;
+        renderPendingList();
+      });
+      list.appendChild(pill);
+    });
+    wrap.classList.remove('hidden');
   }
 
   // ─── Profile Tab ─────────────────────────────────────────────────────────────
@@ -774,6 +819,41 @@
     document.getElementById('profile-deficit-goal').value     = p.deficitGoal     || 500;
     document.getElementById('profile-calorie-ninjas-key').value = p.calorieNinjasKey || '';
     document.getElementById('profile-weight-goal').value        = p.weightGoal > 0 ? p.weightGoal : '';
+
+    document.getElementById('export-btn').addEventListener('click', exportData);
+    document.getElementById('import-input').addEventListener('change', e => {
+      if (e.target.files[0]) importData(e.target.files[0]);
+    });
+  }
+
+  function exportData() {
+    const json = localStorage.getItem(STORAGE_KEY) || '{}';
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `calorie-data-${getTodayKey()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(file) {
+    const statusEl = document.getElementById('import-status');
+    const reader   = new FileReader();
+    reader.onload  = e => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!parsed.profile || !parsed.entries) throw new Error('Invalid');
+        if (!confirm('This will replace all your current data. Are you sure?')) return;
+        saveData(parsed);
+        statusEl.textContent = 'Data imported! Refresh the page to apply.';
+        statusEl.classList.remove('hidden');
+      } catch {
+        statusEl.textContent = 'Invalid file — please use a previously exported file.';
+        statusEl.classList.remove('hidden');
+      }
+    };
+    reader.readAsText(file);
   }
 
   function saveProfile() {

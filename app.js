@@ -336,6 +336,52 @@
 
     renderProgress();
     renderMacros();
+    renderWeightProgress();
+  }
+
+  function calcWeightProgress(data) {
+    const goalWeight = Number(data.profile.weightGoal) || 0;
+    if (!goalWeight) return null;
+
+    const recentWeight = [...getPastDays(30)].reverse()
+      .map(k => data.entries[k] && data.entries[k].weight)
+      .find(w => w && w > 0) || data.profile.weight || null;
+    if (!recentWeight || goalWeight >= recentWeight) return null;
+
+    const peakWeight = Object.values(data.entries)
+      .map(e => e.weight).filter(w => w && w > 0)
+      .reduce((max, w) => Math.max(max, w), data.profile.weight || 0);
+
+    const totalToLose = peakWeight - goalWeight;
+    if (totalToLose <= 0) return null;
+
+    const lostSoPeak = +(peakWeight - recentWeight).toFixed(1);
+    const remaining  = +(recentWeight - goalWeight).toFixed(1);
+    const pct        = Math.min(100, Math.max(0, Math.round((lostSoPeak / totalToLose) * 100)));
+    return { recentWeight, goalWeight, lostSoPeak, remaining, pct };
+  }
+
+  function renderWeightProgress() {
+    const data = loadData();
+    const prog = calcWeightProgress(data);
+    const wrap = document.getElementById('weight-goal-progress');
+    if (!prog) { wrap.classList.add('hidden'); return; }
+    wrap.classList.remove('hidden');
+
+    document.getElementById('wg-bar').style.width   = `${prog.pct}%`;
+    document.getElementById('wg-label').textContent = `${prog.recentWeight} kg → ${prog.goalWeight} kg`;
+    document.getElementById('wg-note').textContent  = prog.lostSoPeak > 0
+      ? `${prog.lostSoPeak} kg lost · ${prog.remaining} kg to go`
+      : `${prog.remaining} kg to go`;
+
+    const milestoneEl = document.getElementById('wg-milestone');
+    const msg =
+      prog.pct >= 100 ? "You've reached your goal weight! 🎉" :
+      prog.pct >= 75  ? "Three quarters there — the finish line is in sight! 🏃‍♀️" :
+      prog.pct >= 50  ? "Halfway to your goal! Keep it up! 💪" :
+      prog.pct >= 25  ? "A quarter of the way there! 🌟" : '';
+    milestoneEl.textContent = msg;
+    milestoneEl.classList.toggle('hidden', !msg);
   }
 
   function renderFoodLog() {
@@ -509,6 +555,7 @@
       const noteEl = document.getElementById('weight-saved-note');
       noteEl.classList.remove('hidden');
       setTimeout(() => noteEl.classList.add('hidden'), 2000);
+      renderWeightProgress();
     });
 
     // Save steps

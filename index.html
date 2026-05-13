@@ -68,6 +68,17 @@
           <button id="save-weight-btn">Save</button>
         </div>
         <p id="weight-saved-note" class="status-msg hidden">Weight saved!</p>
+        <div id="weight-goal-progress" class="hidden">
+          <div class="progress-header wg-header">
+            <span class="progress-label">Goal Weight</span>
+            <span class="progress-value" id="wg-label"></span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill weight-goal-fill" id="wg-bar"></div>
+          </div>
+          <p class="progress-note" id="wg-note"></p>
+          <p class="progress-note achieved hidden" id="wg-milestone"></p>
+        </div>
       </div>
 
       <div class="card">

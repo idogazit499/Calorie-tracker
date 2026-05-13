@@ -699,7 +699,9 @@ input.parsed-kcal-input::-webkit-inner-spin-button {
   100% { background-position: -200% center; }
 }
 
-.deficit-fill { background: linear-gradient(90deg, #66bb6a, #43a047); }
+.deficit-fill      { background: linear-gradient(90deg, #66bb6a, #43a047); }
+.weight-goal-fill  { background: linear-gradient(90deg, #9b59b6, #c4607a); }
+.wg-header         { margin-top: 0.9rem; }
 .deficit-fill.surplus { background: linear-gradient(90deg, #ef5350, #e53935); }
 
 .progress-note {

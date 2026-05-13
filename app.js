@@ -717,12 +717,13 @@
       const baseProtein  = food.protein  || 0;
       const baseCarbs    = food.carbs    || 0;
       const baseFat      = food.fat      || 0;
+      const initialQty   = food.quantity || 1;
 
       const li = document.createElement('li');
       li.className = 'parsed-item';
-      li.dataset.protein = baseProtein;
-      li.dataset.carbs   = baseCarbs;
-      li.dataset.fat     = baseFat;
+      li.dataset.protein = Math.round(baseProtein * initialQty * 10) / 10;
+      li.dataset.carbs   = Math.round(baseCarbs   * initialQty * 10) / 10;
+      li.dataset.fat     = Math.round(baseFat     * initialQty * 10) / 10;
 
       const qtyInput = document.createElement('input');
       qtyInput.type      = 'number';
@@ -749,7 +750,7 @@
       const kcalInput = document.createElement('input');
       kcalInput.type = 'number';
       kcalInput.className = 'parsed-kcal-input';
-      kcalInput.value = food.calories;
+      kcalInput.value = Math.round(baseCalories * initialQty);
       kcalInput.min = '0';
       kcalInput.setAttribute('aria-label', 'Calories');
 

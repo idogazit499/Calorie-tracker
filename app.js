@@ -34,6 +34,7 @@
 
   let pendingFoods    = [];
   let pendingMeal     = 'breakfast';
+  let pendingQuery    = '';
   let selectedDateKey = getTodayKey();
 
   const chartInstances = {};
@@ -616,6 +617,7 @@
 
       statusEl.classList.add('hidden');
       pendingMeal  = getMealDefault();
+      pendingQuery = document.getElementById('food-nlp-input').value.trim();
       pendingFoods = items.map(f => ({
         name:     capitalize(f.name),
         calories: Math.round(f.calories || 0),
@@ -700,6 +702,29 @@
         selectorEl.querySelectorAll('.meal-btn').forEach(b => b.classList.toggle('active', b === btn));
       };
     });
+
+    // Combine button — only show when there are multiple items
+    const combineBtn = document.getElementById('combine-dish-btn');
+    if (pendingFoods.length > 1) {
+      combineBtn.classList.remove('hidden');
+      combineBtn.onclick = () => {
+        const totals = pendingFoods.reduce(
+          (acc, f) => ({ calories: acc.calories + f.calories, protein: acc.protein + f.protein, carbs: acc.carbs + f.carbs, fat: acc.fat + f.fat }),
+          { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        );
+        pendingFoods = [{
+          name:     pendingQuery || 'Combined dish',
+          calories: Math.round(totals.calories),
+          protein:  Math.round(totals.protein * 10) / 10,
+          carbs:    Math.round(totals.carbs   * 10) / 10,
+          fat:      Math.round(totals.fat     * 10) / 10,
+          serving:  '',
+        }];
+        renderPendingList();
+      };
+    } else {
+      combineBtn.classList.add('hidden');
+    }
 
     wrap.classList.remove('hidden');
   }

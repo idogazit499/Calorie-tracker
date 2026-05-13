@@ -416,7 +416,22 @@ input.parsed-kcal-input::-webkit-inner-spin-button {
 .confirm-row {
   margin-top: 0.7rem;
   display: flex;
+  gap: 0.5rem;
   justify-content: flex-end;
+}
+
+.secondary-btn {
+  background: transparent;
+  color: #c4607a;
+  border: 1.5px solid #e8c8d0;
+  box-shadow: none;
+}
+
+.secondary-btn:hover {
+  background: rgba(196,96,122,0.07);
+  border-color: #c4607a;
+  box-shadow: none;
+  transform: none;
 }
 
 .nutritionix-hint {

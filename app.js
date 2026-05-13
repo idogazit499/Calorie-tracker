@@ -498,7 +498,21 @@
     document.getElementById('confirm-foods-btn').addEventListener('click', confirmParsedFoods);
   }
 
-  // ─── Nutritionix Natural Language API ─────────────────────────────────────────
+  // ─── Natural Language Parsing ─────────────────────────────────────────────────
+
+  function containsHebrew(text) {
+    return /[֐-׿]/.test(text);
+  }
+
+  async function translateHebrewToEnglish(text) {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=he|en`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Translation failed');
+    const json = await res.json();
+    const translated = json.responseData && json.responseData.translatedText;
+    if (!translated) throw new Error('No translation returned');
+    return translated;
+  }
 
   async function parseNaturalLanguageFood(text) {
     if (!text) return;
@@ -518,6 +532,17 @@
     statusEl.textContent = 'Parsing…';
     statusEl.classList.remove('hidden');
     logBtn.disabled = true;
+
+    if (containsHebrew(text)) {
+      try {
+        statusEl.textContent = 'Translating…';
+        text = await translateHebrewToEnglish(text);
+      } catch (_) {
+        statusEl.textContent = 'Could not translate Hebrew. Please try again.';
+        logBtn.disabled = false;
+        return;
+      }
+    }
 
     const controller = new AbortController();
     const timeoutId  = setTimeout(() => controller.abort(), 8000);

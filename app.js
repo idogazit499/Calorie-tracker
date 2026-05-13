@@ -7,7 +7,7 @@
   const KCAL_PER_STEP       = 0.04;
   const KCAL_PER_KG         = 7700;
   const CALORIE_NINJAS_URL  = 'https://api.calorieninjas.com/v1/nutrition';
-  const DEFAULT_PROFILE     = { name: 'Shira', weight: 70, height: 175, age: 25, gender: 'male', stepGoal: 10000, deficitGoal: 500, weightGoal: 0, calorieNinjasKey: '' };
+  const DEFAULT_PROFILE     = { name: 'Shira', weight: 70, height: 175, age: 25, gender: 'male', stepGoal: 10000, deficitGoal: 500, weightGoal: 0, calorieNinjasKey: 'aYkVbcqJfi+EIpYkAqDHNw==dFnnPb7SLy7CToiQ' };
   const NICKNAMES           = ['Balu', 'Hunta patata', 'Shula', 'Shablula', 'King', 'King of the world'];
 
   const MEAL_META = {

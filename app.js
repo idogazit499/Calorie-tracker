@@ -32,8 +32,9 @@
     return 'snack';
   }
 
-  let pendingFoods = [];
-  let pendingMeal  = 'breakfast';
+  let pendingFoods    = [];
+  let pendingMeal     = 'breakfast';
+  let selectedDateKey = getTodayKey();
 
   const chartInstances = {};
 
@@ -149,7 +150,7 @@
 
   function renderMacros() {
     const data    = loadData();
-    const dateKey = getTodayKey();
+    const dateKey = selectedDateKey;
     const entry   = getOrCreateEntry(data, dateKey);
     const m       = calcMacros(entry.foods);
     const total   = m.protein + m.carbs + m.fat;
@@ -203,10 +204,9 @@
 
   function renderWeightLog() {
     const data    = loadData();
-    const dateKey = getTodayKey();
-    const entry   = data.entries[dateKey];
+    const entry   = data.entries[selectedDateKey];
     const input   = document.getElementById('weight-input');
-    if (entry && entry.weight) input.value = entry.weight;
+    input.value   = (entry && entry.weight) ? entry.weight : '';
   }
 
   // ─── Today Tab ───────────────────────────────────────────────────────────────
@@ -216,14 +216,20 @@
     const name = getDisplayName((data.profile.name || 'Shira').trim());
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     document.getElementById('greeting-text').textContent = `${timeGreeting}, ${name}! 🌸`;
-    document.getElementById('greeting-sub').textContent = dateStr;
+    if (selectedDateKey === getTodayKey()) {
+      const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      document.getElementById('greeting-sub').textContent = dateStr;
+    } else {
+      const d = new Date(selectedDateKey + 'T00:00:00');
+      const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      document.getElementById('greeting-sub').textContent = `Logging for ${dateStr}`;
+    }
   }
 
   function renderProgress() {
     const data    = loadData();
-    const dateKey = getTodayKey();
+    const dateKey = selectedDateKey;
     const entry   = getOrCreateEntry(data, dateKey);
     const profile = data.profile;
     const name    = getDisplayName((profile.name || 'Shira').trim());
@@ -297,7 +303,7 @@
 
   function renderTodaySummary() {
     const data    = loadData();
-    const dateKey = getTodayKey();
+    const dateKey = selectedDateKey;
     const entry   = getOrCreateEntry(data, dateKey);
     const name    = getDisplayName((data.profile.name || 'Shira').trim());
     const burned  = Math.round(calcTotalBurned(data.profile, entry.steps));
@@ -326,7 +332,7 @@
 
   function renderFoodLog() {
     const data    = loadData();
-    const dateKey = getTodayKey();
+    const dateKey = selectedDateKey;
     const entry   = getOrCreateEntry(data, dateKey);
     const list    = document.getElementById('food-log');
     const empty   = document.getElementById('food-log-empty');
@@ -413,7 +419,7 @@
 
   function removeFoodEntry(idx) {
     const data    = loadData();
-    const dateKey = getTodayKey();
+    const dateKey = selectedDateKey;
     const entry   = getOrCreateEntry(data, dateKey);
     entry.foods.splice(idx, 1);
     saveData(data);
@@ -423,12 +429,40 @@
 
   function initTodayTab() {
     const data    = loadData();
-    const dateKey = getTodayKey();
+    const dateKey = selectedDateKey;
     const entry   = getOrCreateEntry(data, dateKey);
 
     // Pre-fill steps
     const stepsInput = document.getElementById('steps-input');
     if (entry.steps > 0) stepsInput.value = entry.steps;
+
+    // Date picker
+    const datePicker  = document.getElementById('date-picker');
+    const todayKey    = getTodayKey();
+    datePicker.max    = todayKey;
+    datePicker.value  = selectedDateKey;
+    datePicker.addEventListener('change', () => {
+      if (!datePicker.value) return;
+      selectedDateKey = datePicker.value;
+      const d = loadData();
+      const e = getOrCreateEntry(d, selectedDateKey);
+      stepsInput.value = e.steps > 0 ? e.steps : '';
+      renderGreeting();
+      renderWeightLog();
+      renderFoodLog();
+      renderTodaySummary();
+    });
+    document.getElementById('date-today-btn').addEventListener('click', () => {
+      selectedDateKey  = getTodayKey();
+      datePicker.value = selectedDateKey;
+      const d = loadData();
+      const e = getOrCreateEntry(d, selectedDateKey);
+      stepsInput.value = e.steps > 0 ? e.steps : '';
+      renderGreeting();
+      renderWeightLog();
+      renderFoodLog();
+      renderTodaySummary();
+    });
 
     renderGreeting();
     renderWeightLog();
@@ -458,7 +492,7 @@
       const val = parseFloat(document.getElementById('weight-input').value);
       if (!isFinite(val) || val < 20 || val > 300) return;
       const d = loadData();
-      getOrCreateEntry(d, dateKey).weight = val;
+      getOrCreateEntry(d, selectedDateKey).weight = val;
       saveData(d);
       const noteEl = document.getElementById('weight-saved-note');
       noteEl.classList.remove('hidden');
@@ -479,7 +513,7 @@
       errEl.classList.add('hidden');
 
       const d = loadData();
-      const e = getOrCreateEntry(d, dateKey);
+      const e = getOrCreateEntry(d, selectedDateKey);
       e.steps = steps;
       saveData(d);
       renderTodaySummary();
@@ -666,7 +700,7 @@
     if (items.length === 0) return;
 
     const data    = loadData();
-    const dateKey = getTodayKey();
+    const dateKey = selectedDateKey;
     const entry   = getOrCreateEntry(data, dateKey);
 
     items.forEach(item => {

@@ -392,16 +392,18 @@
         const c  = Number(food.carbs)   || 0;
         const fa = Number(food.fat)     || 0;
 
+        const qty      = food.quantity && food.quantity !== 1 ? `×${food.quantity} ` : '';
+        const nameStr  = qty + food.name;
         if (p + c + fa > 0) {
           const nameText = document.createElement('span');
-          nameText.textContent = food.name;
+          nameText.textContent = nameStr;
           const macroEl = document.createElement('span');
           macroEl.className = 'food-macros';
           macroEl.textContent = `${Math.round(p)}g protein · ${Math.round(c)}g carbs · ${Math.round(fa)}g fat`;
           nameWrap.appendChild(nameText);
           nameWrap.appendChild(macroEl);
         } else {
-          nameWrap.textContent = food.name;
+          nameWrap.textContent = nameStr;
         }
 
         const kcalSpan = document.createElement('span');
@@ -650,11 +652,28 @@
     }
 
     pendingFoods.forEach((food, idx) => {
+      const baseCalories = food.calories || 0;
+      const baseProtein  = food.protein  || 0;
+      const baseCarbs    = food.carbs    || 0;
+      const baseFat      = food.fat      || 0;
+
       const li = document.createElement('li');
       li.className = 'parsed-item';
-      li.dataset.protein = food.protein || 0;
-      li.dataset.carbs   = food.carbs   || 0;
-      li.dataset.fat     = food.fat     || 0;
+      li.dataset.protein = baseProtein;
+      li.dataset.carbs   = baseCarbs;
+      li.dataset.fat     = baseFat;
+
+      const qtyInput = document.createElement('input');
+      qtyInput.type      = 'number';
+      qtyInput.className = 'parsed-qty-input';
+      qtyInput.value     = food.quantity || 1;
+      qtyInput.min       = '0.5';
+      qtyInput.step      = '0.5';
+      qtyInput.setAttribute('aria-label', 'Quantity');
+
+      const qtyX = document.createElement('span');
+      qtyX.className   = 'parsed-kcal-unit';
+      qtyX.textContent = '×';
 
       const nameInput = document.createElement('input');
       nameInput.type = 'text';
@@ -677,6 +696,14 @@
       kcalUnit.className = 'parsed-kcal-unit';
       kcalUnit.textContent = 'kcal';
 
+      qtyInput.addEventListener('input', () => {
+        const qty = Math.max(0.5, parseFloat(qtyInput.value) || 1);
+        kcalInput.value    = Math.round(baseCalories * qty);
+        li.dataset.protein = Math.round(baseProtein  * qty * 10) / 10;
+        li.dataset.carbs   = Math.round(baseCarbs    * qty * 10) / 10;
+        li.dataset.fat     = Math.round(baseFat      * qty * 10) / 10;
+      });
+
       const removeBtn = document.createElement('button');
       removeBtn.className = 'remove-food-btn';
       removeBtn.textContent = '✕';
@@ -686,6 +713,8 @@
         renderPendingList();
       });
 
+      li.appendChild(qtyInput);
+      li.appendChild(qtyX);
       li.appendChild(nameInput);
       li.appendChild(servingSpan);
       li.appendChild(kcalInput);
@@ -745,7 +774,8 @@
       const protein  = Number(item.dataset.protein) || 0;
       const carbs    = Number(item.dataset.carbs)   || 0;
       const fat      = Number(item.dataset.fat)     || 0;
-      if (name) entry.foods.push({ name, calories, protein, carbs, fat, meal: pendingMeal });
+      const quantity = Math.max(0.5, parseFloat(item.querySelector('.parsed-qty-input').value) || 1);
+      if (name) entry.foods.push({ name, calories, protein, carbs, fat, meal: pendingMeal, quantity });
     });
 
     saveData(data);

@@ -379,6 +379,33 @@ input.parsed-name-input:focus {
   flex-shrink: 0;
 }
 
+input.parsed-qty-input {
+  width: 42px;
+  border: none;
+  border-bottom: 1.5px solid #e8c8d0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.1rem 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #9a5060;
+  text-align: center;
+  -moz-appearance: textfield;
+  box-shadow: none;
+}
+
+input.parsed-qty-input:focus {
+  outline: none;
+  border-bottom-color: #c4607a;
+  box-shadow: none;
+  background: transparent;
+}
+
+input.parsed-qty-input::-webkit-outer-spin-button,
+input.parsed-qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
 input.parsed-kcal-input {
   width: 58px;
   border: none;

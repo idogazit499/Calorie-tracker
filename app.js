@@ -7,7 +7,7 @@
   const KCAL_PER_STEP       = 0.04;
   const KCAL_PER_KG         = 7700;
   const CALORIE_NINJAS_URL  = 'https://api.calorieninjas.com/v1/nutrition';
-  const DEFAULT_PROFILE     = { name: 'Shira', weight: 70, height: 175, age: 25, gender: 'male', stepGoal: 10000, deficitGoal: 500, weightGoal: 0, calorieNinjasKey: 'aYkVbcqJfi+EIpYkAqDHNw==dFnnPb7SLy7CToiQ' };
+  const DEFAULT_PROFILE     = { name: 'Shira', weight: 70, height: 165, age: 27, gender: 'female', stepGoal: 10000, deficitGoal: 500, weightGoal: 0, calorieNinjasKey: 'aYkVbcqJfi+EIpYkAqDHNw==dFnnPb7SLy7CToiQ' };
   const NICKNAMES           = ['Balu', 'Hunta patata', 'Shula', 'Shablula', 'King', 'King of the world'];
 
   const MEAL_META = {
@@ -47,8 +47,15 @@
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object') return freshData();
       if (!parsed.profile) parsed.profile = { ...DEFAULT_PROFILE };
-      // Merge defaults so new fields (stepGoal, deficitGoal) appear on existing profiles
       parsed.profile = { ...DEFAULT_PROFILE, ...parsed.profile };
+      // Never let blank/zero values override the hardcoded defaults
+      if (!parsed.profile.calorieNinjasKey) parsed.profile.calorieNinjasKey = DEFAULT_PROFILE.calorieNinjasKey;
+      if (!parsed.profile.name)             parsed.profile.name             = DEFAULT_PROFILE.name;
+      if (!parsed.profile.age)              parsed.profile.age              = DEFAULT_PROFILE.age;
+      if (!parsed.profile.gender)           parsed.profile.gender           = DEFAULT_PROFILE.gender;
+      if (!parsed.profile.height)           parsed.profile.height           = DEFAULT_PROFILE.height;
+      if (!parsed.profile.stepGoal)         parsed.profile.stepGoal         = DEFAULT_PROFILE.stepGoal;
+      if (!parsed.profile.deficitGoal)      parsed.profile.deficitGoal      = DEFAULT_PROFILE.deficitGoal;
       if (!parsed.entries) parsed.entries = {};
       return parsed;
     } catch (_) {
@@ -493,6 +500,7 @@
       if (!isFinite(val) || val < 20 || val > 300) return;
       const d = loadData();
       getOrCreateEntry(d, selectedDateKey).weight = val;
+      if (selectedDateKey === getTodayKey()) d.profile.weight = val;
       saveData(d);
       const noteEl = document.getElementById('weight-saved-note');
       noteEl.classList.remove('hidden');

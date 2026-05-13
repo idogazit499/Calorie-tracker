@@ -535,7 +535,7 @@
   // ─── Natural Language Parsing ─────────────────────────────────────────────────
 
   function containsHebrew(text) {
-    return /[֐-׿]/.test(text);
+    return [...text].some(c => { const n = c.charCodeAt(0); return n >= 0x0590 && n <= 0x05FF; });
   }
 
   async function translateHebrewToEnglish(text) {
@@ -544,7 +544,9 @@
     if (!res.ok) throw new Error('Translation failed');
     const json = await res.json();
     const translated = json.responseData && json.responseData.translatedText;
-    if (!translated) throw new Error('No translation returned');
+    if (!translated || json.responseStatus !== 200 || translated.startsWith('MYMEMORY WARNING')) {
+      throw new Error('Translation unavailable');
+    }
     return translated;
   }
 

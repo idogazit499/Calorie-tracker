@@ -44,12 +44,12 @@
   // Then open Firestore Database → Rules and set:
   //   match /users/shira { allow read, write: if true; }
   const FIREBASE_CONFIG = {
-    apiKey:            '',
-    authDomain:        '',
-    projectId:         '',
-    storageBucket:     '',
-    messagingSenderId: '',
-    appId:             '',
+    apiKey:            'AIzaSyC-jmoAWTMte7akYiezFUHgq9vAjS_p5Z4',
+    authDomain:        'calorie-c751e.firebaseapp.com',
+    projectId:         'calorie-c751e',
+    storageBucket:     'calorie-c751e.firebasestorage.app',
+    messagingSenderId: '350513793118',
+    appId:             '1:350513793118:web:4523728a6edee387a18ccf',
   };
 
   let db = null;

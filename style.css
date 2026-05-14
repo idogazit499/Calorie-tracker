@@ -995,6 +995,31 @@ input.parsed-kcal-input::-webkit-inner-spin-button {
   box-shadow: none;
 }
 
+/* ─── My Foods ───────────────────────────────────────────────────────────── */
+
+.save-food-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 0.2rem;
+  color: #c4607a;
+  opacity: 0.7;
+  line-height: 1;
+}
+.save-food-btn:hover { opacity: 1; }
+.save-food-btn:disabled { opacity: 0.35; cursor: default; }
+
+.my-foods-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(196,96,122,0.15);
+  font-size: 0.9rem;
+}
+.my-foods-row:last-child { border-bottom: none; }
+
 /* ─── Responsive ──────────────────────────────────────────────────────────── */
 
 @media (max-width: 420px) {

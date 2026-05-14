@@ -91,7 +91,11 @@
             <p id="nlp-status" class="status-msg hidden"></p>
             <button id="log-food-btn">Log Food</button>
           </div>
-          <p class="nlp-hint">Tip: Press Ctrl+Enter to submit</p>
+          <p class="nlp-hint">Tip: Press Ctrl+Enter to submit · or type <em>food name - calories</em> (e.g. hummus - 180) to skip the lookup</p>
+        </div>
+        <div id="my-foods-wrap" class="hidden">
+          <p class="recent-foods-label">My Foods</p>
+          <div id="my-foods-list"></div>
         </div>
         <div id="recent-foods-wrap" class="hidden">
           <p class="recent-foods-label">Recent</p>
@@ -309,6 +313,11 @@
         </div>
         <p id="import-status" class="status-msg hidden"></p>
         <p id="sync-status" class="status-msg hidden"></p>
+        <fieldset class="goals-section" id="my-foods-manager-section">
+          <legend>My Foods</legend>
+          <div id="my-foods-manager-list"></div>
+          <p id="my-foods-manager-empty" class="empty-msg hidden">No saved foods yet.</p>
+        </fieldset>
       </div>
     </section>
 

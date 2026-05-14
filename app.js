@@ -110,6 +110,7 @@
       if (!parsed.profile.stepGoal)         parsed.profile.stepGoal         = DEFAULT_PROFILE.stepGoal;
       if (!parsed.profile.deficitGoal)      parsed.profile.deficitGoal      = DEFAULT_PROFILE.deficitGoal;
       if (!parsed.entries) parsed.entries = {};
+      if (!parsed.customFoods) parsed.customFoods = [];
       return parsed;
     } catch (_) {
       localStorage.removeItem(STORAGE_KEY);
@@ -118,7 +119,7 @@
   }
 
   function freshData() {
-    return { profile: { ...DEFAULT_PROFILE }, entries: {} };
+    return { profile: { ...DEFAULT_PROFILE }, entries: {}, customFoods: [] };
   }
 
   function saveData(data) {
@@ -578,6 +579,7 @@
     renderWeightLog();
     renderFoodLog();
     renderTodaySummary();
+    renderMyFoods();
     renderRecentFoods();
 
     // Auto-apply steps from iOS Shortcut URL parameter (?steps=8432)
@@ -666,11 +668,26 @@
   async function parseNaturalLanguageFood(text) {
     if (!text) return;
 
-    const data   = loadData();
-    const apiKey = (data.profile.calorieNinjasKey || '').trim();
-
     const statusEl = document.getElementById('nlp-status');
     const logBtn   = document.getElementById('log-food-btn');
+
+    // Manual shorthand: "food name - 200" or "food name - 200 kcal" — skip the API entirely
+    const manualMatch = text.match(/^(.+?)\s*[-–]\s*(\d+)(\s*kcal)?$/i);
+    if (manualMatch) {
+      pendingMeal  = getMealDefault();
+      pendingQuery = text;
+      pendingFoods = [{
+        name: capitalize(manualMatch[1].trim()),
+        calories: parseInt(manualMatch[2], 10),
+        protein: 0, carbs: 0, fat: 0, serving: '', quantity: 1,
+      }];
+      statusEl.classList.add('hidden');
+      renderPendingList();
+      return;
+    }
+
+    const data   = loadData();
+    const apiKey = (data.profile.calorieNinjasKey || '').trim();
 
     if (!apiKey) {
       statusEl.textContent = 'Add your CalorieNinjas API key in the Profile tab to enable natural language logging.';
@@ -820,6 +837,26 @@
         li.dataset.fat     = Math.round(baseFat      * qty * 10) / 10;
       });
 
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'save-food-btn';
+      saveBtn.textContent = '💾';
+      saveBtn.title = 'Save to My Foods';
+      saveBtn.addEventListener('click', () => {
+        const saveName = nameInput.value.trim();
+        const saveKcal = Math.round(Number(kcalInput.value) || 0);
+        if (!saveName) return;
+        const d = loadData();
+        const entry = { name: saveName, calories: saveKcal, protein: Number(li.dataset.protein) || 0, carbs: Number(li.dataset.carbs) || 0, fat: Number(li.dataset.fat) || 0 };
+        const existingIdx = d.customFoods.findIndex(cf => cf.name.toLowerCase() === saveName.toLowerCase());
+        if (existingIdx >= 0) d.customFoods[existingIdx] = entry;
+        else d.customFoods.push(entry);
+        saveData(d);
+        saveBtn.textContent = '✓';
+        saveBtn.disabled = true;
+        renderMyFoods();
+      });
+
       const removeBtn = document.createElement('button');
       removeBtn.className = 'remove-food-btn';
       removeBtn.textContent = '✕';
@@ -835,6 +872,7 @@
       li.appendChild(servingSpan);
       li.appendChild(kcalInput);
       li.appendChild(kcalUnit);
+      li.appendChild(saveBtn);
       li.appendChild(removeBtn);
       list.appendChild(li);
     });
@@ -901,6 +939,7 @@
     document.getElementById('food-nlp-input').value = '';
     renderFoodLog();
     renderTodaySummary();
+    renderMyFoods();
     renderRecentFoods();
   }
 
@@ -951,6 +990,64 @@
     wrap.classList.remove('hidden');
   }
 
+  function renderMyFoods() {
+    const data    = loadData();
+    const customs = data.customFoods || [];
+    const wrap    = document.getElementById('my-foods-wrap');
+    const list    = document.getElementById('my-foods-list');
+    if (!wrap) return;
+    list.innerHTML = '';
+    if (customs.length === 0) { wrap.classList.add('hidden'); return; }
+    customs.forEach(food => {
+      const pill       = document.createElement('button');
+      pill.type        = 'button';
+      pill.className   = 'recent-food-pill';
+      pill.textContent = `${food.name} · ${food.calories} kcal`;
+      pill.addEventListener('click', () => {
+        pendingFoods = [{ name: food.name, calories: food.calories, protein: food.protein || 0, carbs: food.carbs || 0, fat: food.fat || 0, serving: '' }];
+        pendingMeal  = getMealDefault();
+        pendingQuery = food.name;
+        renderPendingList();
+      });
+      list.appendChild(pill);
+    });
+    wrap.classList.remove('hidden');
+  }
+
+  function renderMyFoodsManager() {
+    const data    = loadData();
+    const customs = data.customFoods || [];
+    const listEl  = document.getElementById('my-foods-manager-list');
+    const emptyEl = document.getElementById('my-foods-manager-empty');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    if (customs.length === 0) {
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+    emptyEl.classList.add('hidden');
+    customs.forEach((food, idx) => {
+      const row = document.createElement('div');
+      row.className = 'my-foods-row';
+      const label = document.createElement('span');
+      label.textContent = `${food.name} — ${food.calories} kcal`;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'remove-food-btn';
+      delBtn.textContent = '✕';
+      delBtn.setAttribute('aria-label', `Remove ${food.name}`);
+      delBtn.addEventListener('click', () => {
+        const d = loadData();
+        d.customFoods.splice(idx, 1);
+        saveData(d);
+        renderMyFoodsManager();
+        renderMyFoods();
+      });
+      row.appendChild(label);
+      row.appendChild(delBtn);
+      listEl.appendChild(row);
+    });
+  }
+
   // ─── Profile Tab ─────────────────────────────────────────────────────────────
 
   function initProfileTab() {
@@ -970,6 +1067,7 @@
     document.getElementById('import-input').addEventListener('change', e => {
       if (e.target.files[0]) importData(e.target.files[0]);
     });
+    renderMyFoodsManager();
   }
 
   function exportData() {

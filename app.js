@@ -1291,9 +1291,10 @@
   function init() {
     initFirebase();
 
-    // Seed storage on first run
-    const data = loadData();
-    saveData(data);
+    // Seed localStorage on first run — write directly so we don't push empty data to Firestore
+    if (!localStorage.getItem(STORAGE_KEY)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(freshData()));
+    }
 
     initTabs();
     initTodayTab();

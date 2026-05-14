@@ -39,6 +39,58 @@
 
   const chartInstances = {};
 
+  // ─── Cloud Sync (Firebase) ────────────────────────────────────────────────────
+  // Setup: go to console.firebase.google.com → create project → Add web app → copy config here.
+  // Then open Firestore Database → Rules and set:
+  //   match /users/shira { allow read, write: if true; }
+  const FIREBASE_CONFIG = {
+    apiKey:            '',
+    authDomain:        '',
+    projectId:         '',
+    storageBucket:     '',
+    messagingSenderId: '',
+    appId:             '',
+  };
+
+  let db = null;
+
+  function initFirebase() {
+    if (!FIREBASE_CONFIG.projectId) return;
+    try {
+      const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.firestore(app);
+    } catch (_) {}
+  }
+
+  function cloudSave(data) {
+    if (!db) return;
+    db.doc('users/shira').set(data).catch(() => {});
+  }
+
+  async function cloudLoad() {
+    if (!db) return;
+    try {
+      const snap = await db.doc('users/shira').get();
+      if (!snap.exists) return;
+      const cloud  = snap.data();
+      const cloudTs = cloud._ts || 0;
+      const localTs = (loadData()._ts) || 0;
+      if (cloudTs <= localTs) return;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cloud));
+      renderGreeting();
+      renderWeightLog();
+      renderFoodLog();
+      renderTodaySummary();
+      renderRecentFoods();
+      const el = document.getElementById('sync-status');
+      if (el) {
+        el.textContent = '☁️ Synced from cloud';
+        el.classList.remove('hidden');
+        setTimeout(() => el.classList.add('hidden'), 3000);
+      }
+    } catch (_) {}
+  }
+
   // ─── Storage ─────────────────────────────────────────────────────────────────
 
   function loadData() {
@@ -70,11 +122,13 @@
   }
 
   function saveData(data) {
+    data._ts = Date.now();
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (_) {
       showBanner('Storage unavailable — your data may not be saved.');
     }
+    cloudSave(data);
   }
 
   function getTodayKey() {
@@ -1235,6 +1289,8 @@
   // ─── Entry Point ──────────────────────────────────────────────────────────────
 
   function init() {
+    initFirebase();
+
     // Seed storage on first run
     const data = loadData();
     saveData(data);
@@ -1247,6 +1303,8 @@
       e.preventDefault();
       saveProfile();
     });
+
+    cloudLoad(); // async — silently updates UI if cloud has newer data
   }
 
   document.addEventListener('DOMContentLoaded', init);

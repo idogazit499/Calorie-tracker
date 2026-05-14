@@ -740,13 +740,13 @@
       pendingMeal  = getMealDefault();
       pendingQuery = document.getElementById('food-nlp-input').value.trim();
 
-      // Auto-detect quantity from a leading number in the query (e.g. "2 eggs" → qty 2)
+      // Auto-detect quantity from a leading number in the query (e.g. "2 eggs" → qty 2, "1 tablespoon oil" → qty 1)
       // Only for single-item results to avoid ambiguity; cap at 20 so "100g chicken" stays qty 1
       const autoQtyMatch = items.length === 1 && pendingQuery.match(/^(\d+\.?\d*)\s/);
       const autoQty      = autoQtyMatch ? Math.min(20, parseFloat(autoQtyMatch[1])) : 1;
 
       pendingFoods = items.map(f => {
-        const qty      = autoQty > 1 ? autoQty : 1;
+        const qty      = autoQty;
         const calories = Math.round((f.calories || 0) / qty);
         const protein  = Math.round(((f.protein_g || 0) / qty) * 10) / 10;
         const carbs    = Math.round(((f.carbohydrates_total_g || 0) / qty) * 10) / 10;
